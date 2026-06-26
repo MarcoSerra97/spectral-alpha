@@ -247,6 +247,85 @@ def plot_ic_std_comparison(results: dict[str, pd.DataFrame]) -> None:
     plt.close()
     print(f"  saved {out}")
 
+def plot_coefficient_std() -> None:
+    """
+    Bar chart of the standard deviation of each coefficient across all refits,
+    grouped by variant. Shows the variance reduction at the coefficient level —
+    the underlying mechanism of the IC variance reduction.
+    """
+    methods = ["identity", "sample", "mp"]
+    method_labels = {
+        "identity": "Identity (OLS-Ridge)",
+        "sample":   "GLS-Ridge (sample)",
+        "mp":       "GLS-Ridge (MP-cleaned)",
+    }
+    method_colors = {
+        "identity": "tab:gray",
+        "sample":   "tab:orange",
+        "mp":       "tab:blue",
+    }
+    feature_names = ["momentum_12_1", "short_term_reversal",
+                     "realized_volatility", "amihud_illiquidity",
+                     "hurst_exponent"]
+    feature_labels = {
+        "momentum_12_1": "12-1 momentum",
+        "short_term_reversal": "Short-term reversal",
+        "realized_volatility": "Realized volatility",
+        "amihud_illiquidity": "Amihud illiquidity",
+        "hurst_exponent": "Hurst exponent",
+    }
+
+    # Load coefficient histories
+    std_by_method = {}
+    for method in methods:
+        path = DATA_DIR / f"coef_history_{method}.parquet"
+        if not path.exists():
+            print(f"  skipping {method}: no coefficient history file")
+            continue
+        df = pd.read_parquet(path)
+        stds = {}
+        for fname in feature_names:
+            beta_col = f"beta_{fname}"
+            if beta_col in df.columns:
+                stds[fname] = df[beta_col].std()
+        std_by_method[method] = stds
+
+    if not std_by_method:
+        print("  no coefficient history files found")
+        return
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    x = np.arange(len(feature_names))
+    width = 0.27
+
+    for i, (method, stds) in enumerate(std_by_method.items()):
+        values = [stds.get(f, 0) for f in feature_names]
+        offset = (i - 1) * width
+        bars = ax.bar(x + offset, values, width,
+                      color=method_colors[method],
+                      label=method_labels[method],
+                      edgecolor="black", linewidth=0.5)
+          # value labels on top of each bar
+        #for bar, val in zip(bars, values):
+         #   ax.text(bar.get_x() + bar.get_width() / 2,
+         #           bar.get_height() + 0.00002,
+        #          f"{val:.4f}", ha="center", va="bottom", fontsize=8)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([feature_labels[f] for f in feature_names],
+                       rotation=15, ha="right")
+    ax.set_ylabel("Std of $\\hat\\beta$ across refits")
+    ax.set_title("Coefficient stability across walk-forward refits, by variant")
+    ax.legend(loc="best", frameon=True)
+    ax.grid(alpha=0.3, axis="y")
+
+    plt.tight_layout()
+    out = FIGURES_DIR / "coefficient_std.png"
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"  saved {out}")
+
+
 def plot_coefficient_t_statistics() -> None:
     """
     Plot the t-statistics of regression coefficients over time,
@@ -473,6 +552,7 @@ if __name__ == "__main__":
     plot_ic_std_comparison(results)
     plot_alpha_over_time(results) 
     plot_coefficient_t_statistics()
+    plot_coefficient_std()
     plot_eigenvalue_spectrum()
 
     print("\nSubperiod analysis...")
