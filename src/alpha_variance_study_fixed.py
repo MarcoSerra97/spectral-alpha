@@ -2,24 +2,18 @@
 Controlled study of coefficient variance vs ridge alpha across the three
 weighting variants.
 
-This is a *conditional-variance* experiment: W is estimated once on the full
+This is a conditional-variance experiment: W is estimated once on the full
 training window and held fixed across resamples. The bootstrap therefore
-probes Var(beta_hat | W, training window), not Var(beta_hat | DGP). That
-asymmetry vs the walk-forward variance chart is the point — see the README
-for the discussion of why they don't have to agree.
+probes the variance of the estimators within a fixed training window, thus removing the across-refit dependence 
+which is instead captured by the walking-forward analysis that gives the total variance.
 
-Corrections vs the previous version of this script:
+This code is structured as follow:
 
   (1) Real Künsch moving-block bootstrap: blocks drawn with replacement,
       no deduplication, no sorting. The resample is a multiset of length
       exactly n_blocks * block_size.
 
-  (2) subsample_size is now an exact target, not a truncation cap. The
-      number of blocks is ceil(subsample_size / block_size) and the
-      resample is truncated to subsample_size from the end of the
-      concatenated index list (preserving block structure at the start).
-
-  (3) The fit_gls_ridge call is replaced by a local pooled fit that
+  (3) Local pooled fit that
       handles multiplicity correctly — under MBB the same date can
       appear multiple times in the resample, and it must contribute
       with that multiplicity to F^T W F and F^T W r.
