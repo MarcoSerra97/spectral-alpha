@@ -9,7 +9,7 @@ This project bridges Random Matrix Theory with quantitative equity research, pro
 ---
 
 ## Abstract
-Pooled cross-sectional regressions for returns prediction face a well-known difficulty: financial returns are non-Gaussian and cross-sectionally correlated. This last feature invalidates the i.i.d assumption under which OLS is efficient. When errors are not i.i.d but their true covariance $\Sigma=\text{Cov}(\epsilon)$ is known, the Gauss-Markov-Aitken theorem guarantees that GLS with weighting matrix $W=\Sigma^{-1}$ is the minimum-variance linear unbiased estimator (BLUE). However in practice $\Sigma$ is unknown, and the natural plug-in is the sample covariance matrix $\hat{\Sigma}\in\mathbb{R}^{N\times N}$, with entries
+Pooled cross-sectional regressions for returns prediction face a well-known difficulty: financial returns are non-Gaussian and cross-sectionally correlated. This last feature invalidates the i.i.d assumption under which OLS is efficient. When errors are not i.i.d but their true covariance $\Sigma=\mathrm{Cov}(\epsilon)$ is known, the Gauss-Markov-Aitken theorem guarantees that GLS with weighting matrix $W=\Sigma^{-1}$ is the minimum-variance linear unbiased estimator (BLUE). However in practice $\Sigma$ is unknown, and the natural plug-in is the sample covariance matrix $\hat{\Sigma}\in\mathbb{R}^{N\times N}$, with entries
 
 $$
 \hat{\Sigma}_{ij}:=\frac{1}{T-1}\sum_{t=1}^T(r_{t,i}-\bar{r}_{i})(r_{t,j}-\bar{r}_j)\, ,
@@ -17,7 +17,7 @@ $$
 
 where $N$ is the number of assets,  $T$ is the training window length,  $r_{t,i}$ is the residual of asset $i$ at week $t$ and $\bar{r}_{i}$ is its  training-window mean. However, $\hat{\Sigma}$ contains noise in its spectrum, which propagates into the GLS weighting and corrupts the estimator. Moreover, as it will be our case, $\hat{\Sigma}$ can also be rank-deficient if $N>T$ for some training window, which means that it only admits a Moore-Penrose  pseudo-inverse $\hat{\Sigma}^{+}$; the small non-zero eigenvalues of $\hat{\Sigma}$ invert to enormous values that dominate $W=\hat{\Sigma}^+$ and further destabilise the estimator. 
 
-According to the Marchenko-Pastur (MP) theorem from Random Matrix Theory, in the Kolmogorov limit $N,T\rightarrow \infty$ with $q:=N/T$ held fixed,  the eigenvalues of the sample correlation matrix $\hat{C}$ built from  i.i.d random noise with zero mean and unit variance are supported on the bulk $\mathcal{B}:=\{\lambda:\lambda\in[\lambda_-,\lambda_+]\}$, $\lambda_{\pm}:=(1\pm\sqrt{q})^2$, plus a Dirac-delta contribution at zero when $q\gt 1$.  Therefore, any empirical eigenvalue of the sample correlation matrix $\lambda\gt\lambda_+$ cannot be explained under the pure-noise null, rather it reflects a genuine cross-asset correlation structure and  hence must be regarded as a signal eigenvalue. Conversely, any $\lambda\le\lambda_+$ is  statistically indistinguishable from noise. We therefore apply a trace-preserving MP filter to the returns sample correlation matrix, which consists of  keeping all the signal eigenvalues, replacing the noise eigenvalues with their mean and normalising the diagonal entries to unity. Rescaling by the sample volatilities, we obtain the MP-cleaned covariance matrix $\tilde{\Sigma}$, which is full-rank
+According to the Marchenko-Pastur (MP) theorem from Random Matrix Theory, in the Kolmogorov limit $N,T\rightarrow \infty$ with $q:=N/T$ held fixed,  the eigenvalues of the sample correlation matrix $\hat{C}$ built from  i.i.d random noise with zero mean and unit variance are supported on the bulk $\mathcal{B}:=\lbrace\lambda:\lambda\in[\lambda_-,\lambda_+]\rbrace$, $\lambda_{\pm}:=(1\pm\sqrt{q})^2$, plus a Dirac-delta contribution at zero when $q\gt 1$.  Therefore, any empirical eigenvalue of the sample correlation matrix $\lambda\gt\lambda_+$ cannot be explained under the pure-noise null, rather it reflects a genuine cross-asset correlation structure and  hence must be regarded as a signal eigenvalue. Conversely, any $\lambda\le\lambda_+$ is  statistically indistinguishable from noise. We therefore apply a trace-preserving MP filter to the returns sample correlation matrix, which consists of  keeping all the signal eigenvalues, replacing the noise eigenvalues with their mean and normalising the diagonal entries to unity. Rescaling by the sample volatilities, we obtain the MP-cleaned covariance matrix $\tilde{\Sigma}$, which is full-rank
 and well-conditioned, and whose inverse $W=\tilde{\Sigma}^{-1}$ weights the signal directions with their correctly estimated eigenvalues while assigning to all the noise directions the same uniform weight. 
 
 
@@ -152,31 +152,31 @@ We present the empirical results alongside a qualitative interpretation, explain
    - Hurst exponent
 
 
-3. **GLS-Ridge regression** (`src/model.py`): at each date $t$ in the training window $\mathcal{T}_{\text{train}}$, we stack the $p=5$ features for the $N$ assets into the design matrix $F_t\in \mathbb{R}^{N\times p}$ and denote the next-week returns by $r_{t+1}\in\mathbb{R}^N$. Pooling across all dates in the training window with the weighting matrix $W\in\mathbb{R}^{N\times N}$ assumed to be constant, the GLS-Ridge estimator solves in closed form the normal equation
+3. **GLS-Ridge regression** (`src/model.py`): at each date $t$ in the training window $\mathcal{T}_{\mathrm{train}}$, we stack the $p=5$ features for the $N$ assets into the design matrix $F_t\in \mathbb{R}^{N\times p}$ and denote the next-week returns by $r_{t+1}\in\mathbb{R}^N$. Pooling across all dates in the training window with the weighting matrix $W\in\mathbb{R}^{N\times N}$ assumed to be constant, the GLS-Ridge estimator solves in closed form the normal equation
 
 $$
-\hat\beta = \Big(\sum_{t\in \mathcal{T}_{\text{train}}} F_t^T W F_t + \alpha I\Big)^{-1} \sum_{t\in\mathcal{T}_{\text{train}}} F_t^T W r_{t+1}
+\hat\beta = \Big(\sum_{t\in \mathcal{T}_{\mathrm{train}}} F_t^T W F_t + \alpha I\Big)^{-1} \sum_{t\in\mathcal{T}_{\mathrm{train}}} F_t^T W r_{t+1}
 $$
 
-where $\alpha>0$ is the Ridge penalty. Predictions on out-of-sample dates $t\in\mathcal{T}_{\text{test}}$ are $\hat{r}_{t+1}=F_t\hat\beta$. Three variants of the weighting matrix $W$ are compared:
+where $\alpha>0$ is the Ridge penalty. Predictions on out-of-sample dates $t\in\mathcal{T}_{\mathrm{test}}$ are $\hat{r}_{t+1}=F_t\hat\beta$. Three variants of the weighting matrix $W$ are compared:
 
 - **Identity:** $W = I$ (reduces to OLS-Ridge)
 - **Sample GLS:** $W = \hat\Sigma^{+}$ using the raw sample covariance (via pseudoinverse, due to rank deficiency)
 - **MP-cleaned GLS:** $W = \tilde\Sigma^{-1}$ using the MP-cleaned covariance
 
 4. **Marchenko-Pastur filter** (`src/rmt.py`): For each training window, the MP cleaned covariance matrix is obtained using the following algorithm  
-   - Compute $q=N/T$ from the current window's shape $(T=\text{dim}(\mathcal{T}_\text{train}))$
+   - Compute $q=N/T$ from the current window's shape $(T=\mathrm{dim}(\mathcal{T}_\mathrm{train}))$
    - Compute MP distribution upper-edge eigenvalue $\lambda_+=(1+\sqrt{q})^2$. For the first refit it is $q\sim 1.48$
-   - Build and diagonalise the returns Pearson sample correlation matrix $\hat{C}= V \Lambda V^T$, where $\Lambda=\text{diag}(\lambda_1,\dots,\lambda_N)$ 
-   - Signal/noise partition and MP filter: $\mathcal{S}:=\{k:\lambda_k>\lambda_+\}$, $\mathcal{N}:=\{k:\lambda_k\le \lambda_+\}$. Apply the MP-filter by retaining $\tilde{\lambda}_k=\lambda_k$ $\forall k\in \mathcal{S}$, and substituting $\tilde\lambda_{k}=\mu:=\frac{1}{|\mathcal{N}|}\sum_k \lambda_k$ $\forall k\in \mathcal{N}$. Notice that this filter is trace-invariant $\text{tr}(\Lambda)=\text{tr}(\tilde\Lambda)$. 
-   - Reconstructing the MP-cleaned correlation matrix: from $\hat{C}'=V\tilde{\Lambda}V^T$ and $D_{\hat{C}'}:=\text{diag}(\sqrt{\hat{C}'_{11}},\dots,\sqrt{\hat{C}'_{NN}})$,  we obtain the MP-cleaned correlation matrix $\tilde{C}=D_{\hat{C}'}^{-1}\hat{C}' D_{\hat{C}'}^{-1}$ with unit diagonal entries
-   - MP-cleaned covariance matrix: from the cleaned correlation matrix we go back to the cleaned covariance matrix by rescaling with the sample volatilities $D_{\sigma}:=\text{diag}(\sqrt{\hat{\Sigma}_{11}},\dots,\sqrt{\hat{\Sigma}_{NN}})$ applied as $\tilde{\Sigma}=D_{\sigma}\tilde{C}D_{\sigma}$.
+   - Build and diagonalise the returns Pearson sample correlation matrix $\hat{C}= V \Lambda V^T$, where $\Lambda=\mathrm{diag}(\lambda_1,\dots,\lambda_N)$ 
+   - Signal/noise partition and MP filter: $\mathcal{S}:=\lbrace k:\lambda_k\gt\lambda_+\rbrace$, $\mathcal{N}:=\lbrace k:\lambda_k\le \lambda_+\rbrace$. Apply the MP-filter by retaining $\tilde{\lambda}_k=\lambda_k$ $\forall k\in \mathcal{S}$, and substituting $\tilde\lambda_{k}=\mu:=\frac{1}{|\mathcal{N}|}\sum_k \lambda_k$ $\forall k\in \mathcal{N}$. Notice that this filter is trace-invariant $\mathrm{tr}(\Lambda)=\mathrm{tr}(\tilde\Lambda)$. 
+   - Reconstructing the MP-cleaned correlation matrix: from $\hat{C}'=V\tilde{\Lambda}V^T$ and $D_{\hat{C}'}:=\mathrm{diag}(\sqrt{\hat{C}'_{11}},\dots,\sqrt{\hat{C}'_{NN}})$,  we obtain the MP-cleaned correlation matrix $\tilde{C}=D_{\hat{C}'}^{-1}\hat{C}' D_{\hat{C}'}^{-1}$ with unit diagonal entries
+   - MP-cleaned covariance matrix: from the cleaned correlation matrix we go back to the cleaned covariance matrix by rescaling with the sample volatilities $D_{\sigma}:=\mathrm{diag}(\sqrt{\hat{\Sigma}_{11}},\dots,\sqrt{\hat{\Sigma}_{NN}})$ applied as $\tilde{\Sigma}=D_{\sigma}\tilde{C}D_{\sigma}$.
 
 <p align="center">
 <img src="figures/eigenvalue_spectrum.png" width="90%">
 </p>
 
-*Raw and MP-cleaned eigenvalue spectrum from the first training window ($q=1.48$, $\lambda_+ = 4.91$). Left: sorted eigenvalues on log scale. Right: empirical density with theoretical MP bulk density $\rho_{\text{MP}}=\frac{1}{2\pi q\lambda}\sqrt{(\lambda_+-\lambda)(\lambda-\lambda_-)}$ overlaid. The raw spectrum has ~130 signal eigenvalues above $\lambda_+$, dominated by the market mode at $\lambda_1 \approx 100$, and ~255 noise eigenvalues below, with the smallest reaching $10^{-13}$ (the rank-deficiency tail at $q \gt 1$). MP cleaning leaves the signal eigenvalues untouched and collapses the entire noise bulk to their common mean $\mu\approx 0.3$. The MP-cleaned histogram shows the eigenvalues once the cleaned correlation matrix has been correctly normalised to unity diagonal entries.*
+*Raw and MP-cleaned eigenvalue spectrum from the first training window ($q=1.48$, $\lambda_+ = 4.91$). Left: sorted eigenvalues on log scale. Right: empirical density with theoretical MP bulk density $\rho_{\mathrm{MP}}=\frac{1}{2\pi q\lambda}\sqrt{(\lambda_+-\lambda)(\lambda-\lambda_-)}$ overlaid. The raw spectrum has ~130 signal eigenvalues above $\lambda_+$, dominated by the market mode at $\lambda_1 \approx 100$, and ~255 noise eigenvalues below, with the smallest reaching $10^{-13}$ (the rank-deficiency tail at $q > 1$). MP cleaning leaves the signal eigenvalues untouched and collapses the entire noise bulk to their common mean $\mu\approx 0.3$. The MP-cleaned histogram shows the eigenvalues once the cleaned correlation matrix has been correctly normalised to unity diagonal entries.*
 
   
    
@@ -220,7 +220,7 @@ The plot of the Ridge $\alpha$ selected by CV at each refit per variant is an ou
 From the plot above we see that the Identity variant (top) yields the most stable CV trajectory, with the maximum $\alpha=1000$ selected at most refits. Conversely the sample variant (middle) is the most erratic, jumping between $\alpha = 0.01$ and $\alpha = 1000$ at consecutive refits because the noise-eigenvalue structure of $\hat\Sigma^+$ changes unpredictably. MP (bottom) mirrors identity — mostly $\alpha = 1000$ with occasional drops — because its normal matrix is stable across refits and CV can therefore find a consistent regularisation level.
 
 
-To understand if the variance-reduction mechanism in Finding 1 is exclusively due to the MP-cleaning procedure or whether the Ridge shrinkage plays any active role in it, we run an independent bootstrap study in `experiments/alpha_variance_study_fixed.py`, using the Künsch moving-block bootstrap (4 seeds × 200 resamples, block size 12, subsample size 200), which preserves local temporal structure. In this way we hold  the training window as well as the weighting matrix $W$ fixed, and study how the sampling variance of $\hat{\beta}$ varies as a function of $\alpha$ on a log-spaced grid.  This amounts to measure the conditional variance $\text{Var}(\hat{\beta}|W)$ while, from the law of total variance, the walk-forward scheme producing the Finding 4 measures the total variance across refits $\text{Var}(\hat{\beta})=\mathbb{E}_{W}[\text{Var}(\hat{\beta}|W)]+\text{Var}_W[\mathbb{E}(\hat{\beta}|W)]$. 
+To understand if the variance-reduction mechanism in Finding 1 is exclusively due to the MP-cleaning procedure or whether the Ridge shrinkage plays any active role in it, we run an independent bootstrap study in `experiments/alpha_variance_study_fixed.py`, using the Künsch moving-block bootstrap (4 seeds × 200 resamples, block size 12, subsample size 200), which preserves local temporal structure. In this way we hold  the training window as well as the weighting matrix $W$ fixed, and study how the sampling variance of $\hat{\beta}$ varies as a function of $\alpha$ on a log-spaced grid.  This amounts to measure the conditional variance $\mathrm{Var}(\hat{\beta}|W)$ while, from the law of total variance, the walk-forward scheme producing the Finding 4 measures the total variance across refits $\mathrm{Var}(\hat{\beta})=\mathbb{E}_{W}[\mathrm{Var}(\hat{\beta}|W)]+\mathrm{Var}_W[\mathbb{E}(\hat{\beta}|W)]$. 
  
 <p align="center">
   <img src="figures/coefficient_variance_vs_alpha_fixed.png" width="90%">
@@ -233,21 +233,21 @@ The result, plotted above, shows two interesting features:
 - Within each bootstrap window, for all the features it is the Sample variant and not the MP-cleaned one that yields the lowest estimator variance. 
 
 To find an explanation of this result, the first step is to  realise that the bootstrap has access only to the residual sample covariance $\hat{\Sigma}$, such that the resulting covariance matrix of the estimator is given by the standard sandwich formula
-$\text{Cov}(\hat\beta)=(F_t^T W F_t+\alpha I)^{-1} \mathcal{F} (F_t^T W F_t+\alpha I)$, where $\mathcal{F}:= F_t^T W\hat{\Sigma} W F_t$. It is now useful to rotate into the eigenbasis 
- of the weighted feature covariance matrix $F_t^T W F_t= V \Lambda V^T$, where the covariance matrix of the rotated estimator   $\hat{\beta'}:= V^T\hat{\beta}$ becomes $\text{Cov}(\hat{\beta}'_i,\hat{\beta}'_j)=(V^T\mathcal{F} V)_{ij}/(\lambda_i+\alpha)(\lambda_j+\alpha)$, such that we recover the known result that Ridge shrinkage becomes sizable once $\alpha\sim\lambda_k$, producing a factor four reduction with respect to the $\alpha\rightarrow 0$ value. Rotating back to the feature-space directions we obtain the formulae for the variances we observe in the plot above
+$\mathrm{Cov}(\hat\beta)=(F_t^T W F_t+\alpha I)^{-1} \mathcal{F} (F_t^T W F_t+\alpha I)$, where $\mathcal{F}:= F_t^T W\hat{\Sigma} W F_t$. It is now useful to rotate into the eigenbasis 
+ of the weighted feature covariance matrix $F_t^T W F_t= V \Lambda V^T$, where the covariance matrix of the rotated estimator   $\hat{\beta'}:= V^T\hat{\beta}$ becomes $\mathrm{Cov}(\hat{\beta}'_i,\hat{\beta}'_j)=(V^T\mathcal{F} V)_{ij}/(\lambda_i+\alpha)(\lambda_j+\alpha)$, such that we recover the known result that Ridge shrinkage becomes sizable once $\alpha\sim\lambda_k$, producing a factor four reduction with respect to the $\alpha\rightarrow 0$ value. Rotating back to the feature-space directions we obtain the formulae for the variances we observe in the plot above
 
 $$
-\text{Var}(\hat{\beta}_i)=\sum_{jk}V_{ij}V_{ik}\text{Cov}(\hat{\beta}'_j,\hat{\beta}'_k)=\sum_{jk}\frac{V_{ij}V_{ik}(V^T\mathcal{F} V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,
+\mathrm{Var}(\hat{\beta}_i)=\sum_{jk}V_{ij}V_{ik}\mathrm{Cov}(\hat{\beta}'_j,\hat{\beta}'_k)=\sum_{jk}\frac{V_{ij}V_{ik}(V^T\mathcal{F} V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,
 $$
 
 which, besides the eigenvalues $\lambda_i$, depend also on the projection-components $V_{ij}$.
-In particular, for the sample variant $W=\hat{\Sigma}^{-1}$ (through its pseudoinverse) we have the biggest simplification since for this choice $(V^T \mathcal{F} V)_{\text{sample}}= \Lambda $, while $\mathcal{F}_{\text{identity}}=F_t^T\hat{\Sigma} F_t$ and   $\mathcal{F}_{\text{MP}}=F_t^T\tilde{\Sigma}^{-1}\hat{\Sigma}\tilde{\Sigma}^{-1} F_t$. All in all,  the variance of the coefficient of each feature and for each variant as function of Ridge $\alpha$ observed in the plot is given more explicitely by
+In particular, for the sample variant $W=\hat{\Sigma}^{-1}$ (through its pseudoinverse) we have the biggest simplification since for this choice $(V^T \mathcal{F} V)_{\mathrm{sample}}= \Lambda $, while $\mathcal{F}_{\mathrm{identity}}=F_t^T\hat{\Sigma} F_t$ and   $\mathcal{F}_{\mathrm{MP}}=F_t^T\tilde{\Sigma}^{-1}\hat{\Sigma}\tilde{\Sigma}^{-1} F_t$. All in all,  the variance of the coefficient of each feature and for each variant as function of Ridge $\alpha$ observed in the plot is given more explicitely by
 
 $$
-\text{Var}(\hat{\beta}_i)_{\text{sample}}=\sum_{j} V_{ij}^2\frac{\lambda_{j}}{(\lambda_j+\alpha)^2}\,,\quad \text{Var}(\hat{\beta}_i)_{\text{identity}}=\sum_{jk}\frac{ V_{ij}V_{ik}(V^T F_t^T\hat{\Sigma}F_t V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,\quad \text{Var}(\hat{\beta}_i)_{\text{MP}}=\sum_{jk}\frac{ V_{ij}V_{ik}(V^T F_t^T\tilde{\Sigma}^{-1}\hat{\Sigma}\tilde{\Sigma}^{-1}F_t V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,
+\mathrm{Var}(\hat{\beta}_i)_{\mathrm{sample}}=\sum_{j} V_{ij}^2\frac{\lambda_{j}}{(\lambda_j+\alpha)^2}\,,\quad \mathrm{Var}(\hat{\beta}_i)_{\mathrm{identity}}=\sum_{jk}\frac{ V_{ij}V_{ik}(V^T F_t^T\hat{\Sigma}F_t V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,\quad \mathrm{Var}(\hat{\beta}_i)_{\mathrm{MP}}=\sum_{jk}\frac{ V_{ij}V_{ik}(V^T F_t^T\tilde{\Sigma}^{-1}\hat{\Sigma}\tilde{\Sigma}^{-1}F_t V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,
 $$
 
-and from the plot we learn the hierarchy $\text{Var}(\hat{\beta}_i)_{\text{identity}}>\text{Var}(\hat{\beta}_i)_{\text{MP}}>\text{Var}(\hat{\beta}_i)_{\text{sample}}$ that we remark to hold locally, i.e within-refit and not across-refit. Moreover, we understand that the $\text{Var}(\hat{\beta}_i)$ curve starts to bend at early or late $\alpha$ depending whether the $i$-th feature projects mainly onto small $\lambda_k$ or on the top eigenvalues, for the variant at hand. On a representative bootstrap window, the 5 eigenvalues of the matrix $F_t^T W F_t$, for all the three choices of $W$, are reported in the table below, ranked from the largest $(\lambda_1)$ to the smallest $(\lambda_5)$.
+and from the plot we learn the hierarchy $\mathrm{Var}(\hat{\beta}_i)_{\mathrm{identity}}>\mathrm{Var}(\hat{\beta}_i)_{\mathrm{MP}}>\mathrm{Var}(\hat{\beta}_i)_{\mathrm{sample}}$ that we remark to hold locally, i.e within-refit and not across-refit. Moreover, we understand that the $\mathrm{Var}(\hat{\beta}_i)$ curve starts to bend at early or late $\alpha$ depending whether the $i$-th feature projects mainly onto small $\lambda_k$ or on the top eigenvalues, for the variant at hand. On a representative bootstrap window, the 5 eigenvalues of the matrix $F_t^T W F_t$, for all the three choices of $W$, are reported in the table below, ranked from the largest $(\lambda_1)$ to the smallest $(\lambda_5)$.
   
 | Rank | Identity  | Sample  | MP |
 |---|---:|---:|---:|
@@ -259,50 +259,50 @@ and from the plot we learn the hierarchy $\text{Var}(\hat{\beta}_i)_{\text{ident
 
 We therefore conclude that, for the identity variant, realised volatility and Amihud are the features with most substantial projection $V_{j5}$ onto the eigenvector associated to $\lambda_5=177$, and therefore their variance starts to bend early, around $\alpha\in[30,100]$. The remaining features are more orthogonal to direction five, hence their variances start bending later, around $\alpha\in[5\times 10^{2},10^{3}]$; For both sample and MP variant, the eigenvalues are not smaller that $10^{5}$ and  all the curves remain flat at least up to the endpoint of our interval $\alpha\sim 3\times 10^3$, where we observe the beginning of a slight bend for realised volatility and Amihud features. 
 
-This analysis shows that Ridge shrinkage in the MP variant does not play any role in the variance reduction of the Spearman IC we observe for MP variant in Finding 1 since, for the $\alpha\lesssim \mathcal{O}(10^{3})$ value selected in the CV of the MP variant, the shrinkage is completely ineffective and the regression is actually GLS with inverse of the Marchenko-Pastur cleaned  covariance matrix. Moreover, the stability of the MP-cleaned covariance matrix across refits, compared to its wildly unstable sample counterpart, has the effect of breaking the within-refit hierarchy $\text{Var}(\hat{\beta}_i)_{\text{identity}}>\text{Var}(\hat{\beta}_i)_{\text{MP}}>\text{Var}(\hat{\beta}_i)_{\text{sample}}$: in particular, as shown in the plot of Finding 4, for the 12-1 momentum and short-term reversal features the MP-cleaned and raw sample variant yield globally the smallest and largest across-refit  variances, respectively, with the identity variant sitting in between.
+This analysis shows that Ridge shrinkage in the MP variant does not play any role in the variance reduction of the Spearman IC we observe for MP variant in Finding 1 since, for the $\alpha\lesssim \mathcal{O}(10^{3})$ value selected in the CV of the MP variant, the shrinkage is completely ineffective and the regression is actually GLS with inverse of the Marchenko-Pastur cleaned  covariance matrix. Moreover, the stability of the MP-cleaned covariance matrix across refits, compared to its wildly unstable sample counterpart, has the effect of breaking the within-refit hierarchy $\mathrm{Var}(\hat{\beta}_i)_{\mathrm{identity}}>\mathrm{Var}(\hat{\beta}_i)_{\mathrm{MP}}>\mathrm{Var}(\hat{\beta}_i)_{\mathrm{sample}}$: in particular, as shown in the plot of Finding 4, for the 12-1 momentum and short-term reversal features the MP-cleaned and raw sample variant yield globally the smallest and largest across-refit  variances, respectively, with the identity variant sitting in between.
 
 ### Why the MP-cleaned variant yields the lowest Spearman IC volatility
-To find a qualitative explanation of why the MP-cleaned variant yields the lowest Spearman IC standard deviation, we start by recalling that `src/backtest.py` produces a time series $\{\text{IC}_{t}\}_{t=1}^{T_{\text{test}}}$, for  $T_{\text{test}}\sim 776$ out-of-sample weeks in the window 2010-2024, where the Spearman IC at week t $\text{IC}_t$ is defined as the Pearson correlation coefficient between the rank of predicted returns $\hat{r}_{t+1}=F_t\hat{\beta}$ and the rank of realised returns $r_{t+1}$, i.e
+To find a qualitative explanation of why the MP-cleaned variant yields the lowest Spearman IC standard deviation, we start by recalling that `src/backtest.py` produces a time series $\lbrace\mathrm{IC}_{t}\rbrace_{t=1}^{T_{\mathrm{test}}}$, for  $T_{\mathrm{test}}\sim 776$ out-of-sample weeks in the window 2010-2024, where the Spearman IC at week t $\mathrm{IC}_t$ is defined as the Pearson correlation coefficient between the rank of predicted returns $\hat{r}_{t+1}=F_t\hat{\beta}$ and the rank of realised returns $r_{t+1}$, i.e
 
-$$ \text{IC}_t:=\frac{\text{Cov}_{N_t}(\text{rank}(F_t\hat{\beta}),\text{rank}(r_{t+1}))}{\sigma_{N_t}(\text{rank}(F_t\hat{\beta}))\sigma_{N_t}(\text{rank}(r_{t+1}))}\, ,  
+$$ \mathrm{IC}_t:=\frac{\mathrm{Cov}_{N_t}(\mathrm{rank}(F_t\hat{\beta}),\mathrm{rank}(r_{t+1}))}{\sigma_{N_t}(\mathrm{rank}(F_t\hat{\beta}))\sigma_{N_t}(\mathrm{rank}(r_{t+1}))}\, ,  
 $$
 
-with $\text{Cov}_{N_t}[\cdot]$ and $\sigma_{N_t}[\cdot]$  respectively the sample covariance and standard deviations taken cross-sectionally, i.e across the $N_t$ assets for a fixed week $t$. Then `src/evaluation.py` computes the sample standard deviation of the IC time series from the mean $\overline{\text{IC}}=1/T_{\text{test}}\sum_{t\in T_{\text{test}}}\text{IC}_t$
+with $\mathrm{Cov}_{N_t}[\cdot]$ and $\sigma_{N_t}[\cdot]$  respectively the sample covariance and standard deviations taken cross-sectionally, i.e across the $N_t$ assets for a fixed week $t$. Then `src/evaluation.py` computes the sample standard deviation of the IC time series from the mean $\overline{\mathrm{IC}}=1/T_{\mathrm{test}}\sum_{t\in T_{\mathrm{test}}}\mathrm{IC}_t$
 
 $$ 
-\sigma^2=\frac{1}{T_{\text{test}}-1}\sum_{t\in T_{\text{test}}}(\text{IC}_t-\overline{\text{IC}})^2\, ,
+\sigma^2=\frac{1}{T_{\mathrm{test}}-1}\sum_{t\in T_{\mathrm{test}}}(\mathrm{IC}_t-\overline{\mathrm{IC}})^2\, ,
 $$
 
 on which we observe the Finding 1.
 
-To run our diagnostic about the time stability of $\sigma^2$ for the different regression variants, we shall first manipulate the expression of $\text{IC}_t$. We introduce the centered ranks vectors $\mathcal{R}, \hat{\mathcal{R}}\in \mathbb{R}^{N_t}$ with components
+To run our diagnostic about the time stability of $\sigma^2$ for the different regression variants, we shall first manipulate the expression of $\mathrm{IC}_t$. We introduce the centered ranks vectors $\mathcal{R}, \hat{\mathcal{R}}\in \mathbb{R}^{N_t}$ with components
 
 $$
-\hat{\mathcal{R}}_i(F_t\hat{\beta})=\text{rank}_i (F_t\hat{\beta})-\frac{N_t+1}{2}\,,\quad {\mathcal{R}}_i(r_{t+1})=\text{rank}_i (r_{t+1})-\frac{N_t+1}{2}\, ,
+\hat{\mathcal{R}}_i(F_t\hat{\beta})=\mathrm{rank}_i (F_t\hat{\beta})-\frac{N_t+1}{2}\,,\quad {\mathcal{R}}_i(r_{t+1})=\mathrm{rank}_i (r_{t+1})-\frac{N_t+1}{2}\, ,
 $$
 
-$i=1,\dots,N_t$ and accordingly rewrite $\text{IC}_t$ as
+$i=1,\dots,N_t$ and accordingly rewrite $\mathrm{IC}_t$ as
 
 $$
-\text{IC}_t(\hat\beta)=\frac{\langle \hat{\mathcal{R}},\mathcal{R}\rangle}{||\hat{\mathcal{R}}||\cdot||\mathcal{R}||}\, ,
+\mathrm{IC}_t(\hat\beta)=\frac{\langle \hat{\mathcal{R}},\mathcal{R}\rangle}{||\hat{\mathcal{R}}||\cdot||\mathcal{R}||}\, ,
 $$
 
-with $\langle\hat{\mathcal{R}},\mathcal{R}\rangle:=\sum_{i=1}^{N_t}\hat{\mathcal{R}}_i\mathcal{R}_i$ and $||\mathcal{R}||:=\sqrt{\langle\mathcal{R},\mathcal{R}\rangle}$ denoting respectively the dot-product and the norm of vectors. Notice that, as we highlighted, the time series $\text{IC}_t$ depends on our predictions through the estimator $\hat{\beta}_{(k)}\in \mathbb{R}^p$ at  refit $k\in\{1,\dots,K_{\text{refit}}=194\}$ the week $t$ belongs to. Moreover, because the rank operation is invariant under a positive rescaling of its argument, $\mathcal{R}(c \cdot x)=\mathcal{R(x)},\,\,\forall c>0$, it follows that $\text{IC}_{t}(\hat{u})$ is really a function of the direction in which the $\hat{\beta}$ vector points at every refit, $\hat{u}_{(k)}:=\hat{\beta}_{(k)}/||\hat{\beta}_{(k)}||$.
+with $\langle\hat{\mathcal{R}},\mathcal{R}\rangle:=\sum_{i=1}^{N_t}\hat{\mathcal{R}}_i\mathcal{R}_i$ and $||\mathcal{R}||:=\sqrt{\langle\mathcal{R},\mathcal{R}\rangle}$ denoting respectively the dot-product and the norm of vectors. Notice that, as we highlighted, the time series $\mathrm{IC}_t$ depends on our predictions through the estimator $\hat{\beta}_{(k)}\in \mathbb{R}^p$ at  refit $k\in\lbrace 1,\dots,K_{\mathrm{refit}}=194\rbrace$ the week $t$ belongs to. Moreover, because the rank operation is invariant under a positive rescaling of its argument, $\mathcal{R}(c \cdot x)=\mathcal{R(x)},\,\,\forall c>0$, it follows that $\mathrm{IC}_{t}(\hat{u})$ is really a function of the direction in which the $\hat{\beta}$ vector points at every refit, $\hat{u}_{(k)}:=\hat{\beta}_{(k)}/||\hat{\beta}_{(k)}||$.
 
 
  We shall now introduce the unit vector $\bar{u}$ as the unit-norm across-refit sample mean vector of the per-refit directions $\hat{u}_{(k)}$
 
 $$
-\bar{u}=\frac{\hat{u}_{\text{sample}}}{||\hat{u}_\text{sample}||}\,,\quad\hat{u}_{\text{sample}}=\frac{1}{K_{\text{refit}}}\sum_{k=1}^{K_{\text{refit}}}\hat{u}_k\, .
+\bar{u}=\frac{\hat{u}_{\mathrm{sample}}}{||\hat{u}_\mathrm{sample}||}\,,\quad\hat{u}_{\mathrm{sample}}=\frac{1}{K_{\mathrm{refit}}}\sum_{k=1}^{K_{\mathrm{refit}}}\hat{u}_k\, .
 $$
 
-We therefore think of the actual time series $\text{IC}_t(\hat{u})$ as stemming from the sum of two pieces
+We therefore think of the actual time series $\mathrm{IC}_t(\hat{u})$ as stemming from the sum of two pieces
 
 $$
-\text{IC}_t(\hat{u})=\text{IC}_t(\bar{u})+\Delta_t\, ,
+\mathrm{IC}_t(\hat{u})=\mathrm{IC}_t(\bar{u})+\Delta_t\, ,
 $$
 
-where the first one is a "frozen contribution" obtained from using the across-refit mean direction $\bar{u}$ as prediction for all refits and the second one is the "deviation contribution" $\Delta_t:= \text{IC}_t(\hat{u})-\text{IC}_t(\bar{u})$ from the actual time series. Thus, taking the variance to both members  we obtain the algebraically exact variance decomposition
+where the first one is a "frozen contribution" obtained from using the across-refit mean direction $\bar{u}$ as prediction for all refits and the second one is the "deviation contribution" $\Delta_t:= \mathrm{IC}_t(\hat{u})-\mathrm{IC}_t(\bar{u})$ from the actual time series. Thus, taking the variance to both members  we obtain the algebraically exact variance decomposition
 
 $$
 \sigma^2= F+ D+2C\, ,
@@ -311,17 +311,17 @@ $$
 where 
 
 $$
-F:=\text{Var}_t(\text{IC}_t(\bar{u}))\,,\quad D:=\text{Var}_t(\Delta_t)\,,\quad C:=\text{Cov}_t(\text{IC}_t(\bar{u}),\Delta_t)
+F:=\mathrm{Var}_t(\mathrm{IC}_t(\bar{u}))\,,\quad D:=\mathrm{Var}_t(\Delta_t)\,,\quad C:=\mathrm{Cov}_t(\mathrm{IC}_t(\bar{u}),\Delta_t)
 $$
 
 have the following meaning:
 - $F$ is the sample variance, across the
-$T_{\text{test}}$ weeks, of what the IC would have been if the estimator produced $\bar{u}$ at every single week. The only sources of week-to-week variation in $\text{IC}_t({\bar{u}})$​ are the features $F_t$
+$T_{\mathrm{test}}$ weeks, of what the IC would have been if the estimator produced $\bar{u}$ at every single week. The only sources of week-to-week variation in $\mathrm{IC}_t({\bar{u}})$​ are the features $F_t$
 and returns $r_{t+1}$, as the $\bar{u}$ is fixed,
 - $D$ is the sample variance, across the
-$T_{\text{test}}$ weeks,  of deviation $\Delta_t$ time series, hence it quantifies the temporal instability of the per-week difference between the actual IC and the frozen IC.
+$T_{\mathrm{test}}$ weeks,  of deviation $\Delta_t$ time series, hence it quantifies the temporal instability of the per-week difference between the actual IC and the frozen IC.
 - $C$  is the sample covariance,  across the
-$T_{\text{test}}$ weeks, of two time series $\text{IC}_t(\bar{u})$ and $\Delta_t$, hence it 
+$T_{\mathrm{test}}$ weeks, of two time series $\mathrm{IC}_t(\bar{u})$ and $\Delta_t$, hence it 
 quantifies the temporal covariation between the frozen IC and the deviation across the test window.
  
 
