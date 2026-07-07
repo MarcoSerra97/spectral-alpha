@@ -12,7 +12,7 @@ This project bridges Random Matrix Theory with quantitative equity research, pro
 Pooled cross-sectional regressions for returns prediction face a well-known difficulty: financial returns are non-Gaussian and cross-sectionally correlated. This last feature invalidates the i.i.d assumption under which OLS is efficient. When errors are not i.i.d but their true covariance $\Sigma=\mathrm{Cov}(\epsilon)$ is known, the Gauss-Markov-Aitken theorem guarantees that GLS with weighting matrix $W=\Sigma^{-1}$ is the minimum-variance linear unbiased estimator (BLUE). However in practice $\Sigma$ is unknown, and the natural plug-in is the sample covariance matrix $\hat{\Sigma}\in\mathbb{R}^{N\times N}$, with entries
 
 $$
-\hat{\Sigma}_{ij}:=\frac{1}{T-1}\sum_{t=1}^T(r_{t,i}-\bar{r}_{i})(r_{t,j}-\bar{r}_j)\, ,
+\hat{\Sigma}_{ij}:=\frac{1}{T-1}\sum_{t=1}^T(r_{t,i}-\bar{r}_{i})(r_{t,j}-\bar{r}_j),
 $$
 
 where $N$ is the number of assets,  $T$ is the training window length,  $r_{t,i}$ is the residual of asset $i$ at week $t$ and $\bar{r}_{i}$ is its  training-window mean. However, $\hat{\Sigma}$ contains noise in its spectrum, which propagates into the GLS weighting and corrupts the estimator. Moreover, as it will be our case, $\hat{\Sigma}$ can also be rank-deficient if $N>T$ for some training window, which means that it only admits a Moore-Penrose  pseudo-inverse $\hat{\Sigma}^{+}$; the small non-zero eigenvalues of $\hat{\Sigma}$ invert to enormous values that dominate $W=\hat{\Sigma}^+$ and further destabilise the estimator. 
@@ -168,16 +168,16 @@ where $\alpha>0$ is the Ridge penalty. Predictions on out-of-sample dates $t\in\
    - Compute $q=N/T$ from the current window's shape $(T=\mathrm{dim}(\mathcal{T}_\mathrm{train}))$
    - Compute MP distribution upper-edge eigenvalue $\lambda_+=(1+\sqrt{q})^2$. For the first refit it is $q\sim 1.48$
    - Build and diagonalise the returns Pearson sample correlation matrix $\hat{C}= V \Lambda V^T$, where $\Lambda=\mathrm{diag}(\lambda_1,\dots,\lambda_N)$ 
-   - Signal/noise partition and MP filter: $\mathcal{S}:=\lbrace k:\lambda_k\gt\lambda_+\rbrace$, $\mathcal{N}:=\lbrace k:\lambda_k\le \lambda_+\rbrace$. Apply the MP-filter by retaining all the eigenvalues in the signal subspace and replacing those in the noise subspace with their mean. This defines the matrix $\tilde{\Lambda}$ of cleaned eigenvalues 
-   $$
+   - Signal/noise partition and MP filter: $\mathcal{S}:=\lbrace k:\lambda_k\gt\lambda_+\rbrace$, $\mathcal{N}:=\lbrace k:\lambda_k\le \lambda_+\rbrace$. Apply the MP-filter by retaining all the eigenvalues in the signal subspace and replacing those in the noise subspace with their mean. This defines the matrix $\tilde{\Lambda}$ of cleaned eigenvalues  
 
+   $$
    \tilde{\lambda}_k=\begin{cases}
                       \lambda_{k}\quad k\in \mathcal{S}\\
                       \mu:=\frac{1}{|\mathcal{N}|}\sum_k \lambda_k \quad k\in \mathcal{N}
                       \end{cases}
-
-   $$
-    Notice that this filter is trace-invariant $\mathrm{tr}(\Lambda)=\mathrm{tr}(\tilde\Lambda)$. 
+  $$
+  
+   Notice that this filter is trace-invariant $\mathrm{tr}(\Lambda)=\mathrm{tr}(\tilde\Lambda)$. 
    - Reconstructing the MP-cleaned correlation matrix: from $\hat{C}'=V\tilde{\Lambda}V^T$ and $D_{\hat{C}'}:=\mathrm{diag}(\sqrt{\hat{C}'_{11}},\dots,\sqrt{\hat{C}'_{NN}})$,  we obtain the MP-cleaned correlation matrix $\tilde{C}=D_{\hat{C}'}^{-1}\hat{C}' D_{\hat{C}'}^{-1}$ with unit diagonal entries
    - MP-cleaned covariance matrix: from the cleaned correlation matrix we go back to the cleaned covariance matrix by rescaling with the sample volatilities $D_{\sigma}:=\mathrm{diag}(\sqrt{\hat{\Sigma}_{11}},\dots,\sqrt{\hat{\Sigma}_{NN}})$ applied as $\tilde{\Sigma}=D_{\sigma}\tilde{C}D_{\sigma}$.
 
