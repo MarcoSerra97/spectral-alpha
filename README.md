@@ -170,14 +170,14 @@ where $\alpha>0$ is the Ridge penalty. Predictions on out-of-sample dates $t\in\
    - Build and diagonalise the returns Pearson sample correlation matrix $\hat{C}= V \Lambda V^T$, where $\Lambda=\mathrm{diag}(\lambda_1,\dots,\lambda_N)$ 
    - Signal/noise partition and MP filter: $\mathcal{S}:=\lbrace k:\lambda_k\gt\lambda_+\rbrace$, $\mathcal{N}:=\lbrace k:\lambda_k\le \lambda_+\rbrace$. Apply the MP-filter by retaining all the eigenvalues in the signal subspace and replacing those in the noise subspace with their mean. This defines the matrix $\tilde{\Lambda}$ of cleaned eigenvalues  
 
-   $$
-   \tilde{\lambda}_k=\begin{cases}
+     $$
+     \tilde{\lambda}_k=\begin{cases}
                       \lambda_{k}\quad k\in \mathcal{S}\\
                       \mu:=\frac{1}{|\mathcal{N}|}\sum_k \lambda_k \quad k\in \mathcal{N}
                       \end{cases}
-  $$
-  
-   Notice that this filter is trace-invariant $\mathrm{tr}(\Lambda)=\mathrm{tr}(\tilde\Lambda)$. 
+    $$
+    
+     Notice that this filter is trace-invariant $\mathrm{tr}(\Lambda)=\mathrm{tr}(\tilde\Lambda)$. 
    - Reconstructing the MP-cleaned correlation matrix: from $\hat{C}'=V\tilde{\Lambda}V^T$ and $D_{\hat{C}'}:=\mathrm{diag}(\sqrt{\hat{C}'_{11}},\dots,\sqrt{\hat{C}'_{NN}})$,  we obtain the MP-cleaned correlation matrix $\tilde{C}=D_{\hat{C}'}^{-1}\hat{C}' D_{\hat{C}'}^{-1}$ with unit diagonal entries
    - MP-cleaned covariance matrix: from the cleaned correlation matrix we go back to the cleaned covariance matrix by rescaling with the sample volatilities $D_{\sigma}:=\mathrm{diag}(\sqrt{\hat{\Sigma}_{11}},\dots,\sqrt{\hat{\Sigma}_{NN}})$ applied as $\tilde{\Sigma}=D_{\sigma}\tilde{C}D_{\sigma}$.
 
