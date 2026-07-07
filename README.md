@@ -9,9 +9,15 @@ This project bridges Random Matrix Theory with quantitative equity research, pro
 ---
 
 ## Abstract
-Pooled cross-sectional regressions for returns prediction face a well-known difficulty: financial returns are non-Gaussian and cross-sectionally correlated. This last feature invalidates the i.i.d assumption under which OLS is efficient. When errors are not i.i.d but their true covariance $\Sigma=\text{Cov}(\epsilon)$ is known, the Gauss-Markov-Aitken theorem guarantees that GLS with weighting matrix $W=\Sigma^{-1}$ is the minimum-variance linear unbiased estimator (BLUE). However in practice $\Sigma$ is unknown, and the natural plug-in is  the sample covariance matrix $\hat{\Sigma}\in\mathbb{R}^{N\times N}$, with entries $\hat{\Sigma}_{ij}:=\frac{1}{T-1}\sum_{t=1}^T(r_{t,i}-\bar{r}_{i})(r_{t,j}-\bar{r}_j)$, where $N$ is the number of assets,  $T$ is the training window length,  $r_{t,i}$ is the residual of asset $i$ at week $t$ and $\bar{r}_{i}$ is its  training-window mean. However, $\hat{\Sigma}$ contains noise in its spectrum, which propagates into the GLS weighting and corrupts the estimator. Moreover, as it will be our case, $\hat{\Sigma}$ can also be rank-deficient if $N>T$ for some training window, which means that it only admits a Moore-Penrose  pseudo-inverse $\hat{\Sigma}^{+}$; the small non-zero eigenvalues of $\hat{\Sigma}$ invert to enormous values that dominate $W=\hat{\Sigma}^+$ and further destabilise the estimator. 
+Pooled cross-sectional regressions for returns prediction face a well-known difficulty: financial returns are non-Gaussian and cross-sectionally correlated. This last feature invalidates the i.i.d assumption under which OLS is efficient. When errors are not i.i.d but their true covariance $\Sigma=\text{Cov}(\epsilon)$ is known, the Gauss-Markov-Aitken theorem guarantees that GLS with weighting matrix $W=\Sigma^{-1}$ is the minimum-variance linear unbiased estimator (BLUE). However in practice $\Sigma$ is unknown, and the natural plug-in is the sample covariance matrix $\hat{\Sigma}\in\mathbb{R}^{N\times N}$, with entries
 
-According to the Marchenko-Pastur (MP) theorem from Random Matrix Theory, in the Kolmogorov limit $N,T\rightarrow \infty$ with $q:=N/T$ held fixed,  the eigenvalues of the sample correlation matrix $\hat{C}$ built from  i.i.d random noise with zero mean and unit variance are supported on the bulk $\mathcal{B}:=\{\lambda:\lambda\in[\lambda_-,\lambda_+]\}$, $\lambda_{\pm}:=(1\pm\sqrt{q})^2$, plus a Dirac-delta contribution at zero when $q>1$.  Therefore, any empirical eigenvalue of the sample correlation matrix $\lambda>\lambda_+$ cannot be explained under the pure-noise null, rather it reflects a genuine cross-asset correlation structure and  hence must be regarded as a signal eigenvalue. Conversely, any $\lambda\le\lambda_+$ is  statistically indistinguishable from noise. We therefore apply a trace-preserving MP filter to the returns sample correlation matrix, which consists of  keeping all the signal eigenvalues, replacing the noise eigenvalues with their mean and normalising the diagonal entries to unity. Rescaling by the sample volatilities, we obtain the MP-cleaned covariance matrix $\tilde{\Sigma}$, which is full-rank
+$$
+\hat{\Sigma}_{ij}:=\frac{1}{T-1}\sum_{t=1}^T(r_{t,i}-\bar{r}_{i})(r_{t,j}-\bar{r}_j)\, ,
+$$
+
+where $N$ is the number of assets,  $T$ is the training window length,  $r_{t,i}$ is the residual of asset $i$ at week $t$ and $\bar{r}_{i}$ is its  training-window mean. However, $\hat{\Sigma}$ contains noise in its spectrum, which propagates into the GLS weighting and corrupts the estimator. Moreover, as it will be our case, $\hat{\Sigma}$ can also be rank-deficient if $N>T$ for some training window, which means that it only admits a Moore-Penrose  pseudo-inverse $\hat{\Sigma}^{+}$; the small non-zero eigenvalues of $\hat{\Sigma}$ invert to enormous values that dominate $W=\hat{\Sigma}^+$ and further destabilise the estimator. 
+
+According to the Marchenko-Pastur (MP) theorem from Random Matrix Theory, in the Kolmogorov limit $N,T\rightarrow \infty$ with $q:=N/T$ held fixed,  the eigenvalues of the sample correlation matrix $\hat{C}$ built from  i.i.d random noise with zero mean and unit variance are supported on the bulk $\mathcal{B}:=\{\lambda:\lambda\in[\lambda_-,\lambda_+]\}$, $\lambda_{\pm}:=(1\pm\sqrt{q})^2$, plus a Dirac-delta contribution at zero when $q\gt 1$.  Therefore, any empirical eigenvalue of the sample correlation matrix $\lambda\gt\lambda_+$ cannot be explained under the pure-noise null, rather it reflects a genuine cross-asset correlation structure and  hence must be regarded as a signal eigenvalue. Conversely, any $\lambda\le\lambda_+$ is  statistically indistinguishable from noise. We therefore apply a trace-preserving MP filter to the returns sample correlation matrix, which consists of  keeping all the signal eigenvalues, replacing the noise eigenvalues with their mean and normalising the diagonal entries to unity. Rescaling by the sample volatilities, we obtain the MP-cleaned covariance matrix $\tilde{\Sigma}$, which is full-rank
 and well-conditioned, and whose inverse $W=\tilde{\Sigma}^{-1}$ weights the signal directions with their correctly estimated eigenvalues while assigning to all the noise directions the same uniform weight. 
 
 
@@ -59,10 +65,10 @@ We present the empirical results alongside a qualitative interpretation, explain
 *Histograms of the 776 weekly ICs for each variant. All three distributions are approximately symmetric around zero indicating a null mean IC. MP-variant has visibly the tightest distribution and identity-variant the widest tails*
 
 <p align="center">
-<img src="figures/cumulative_ic.png" width=80%>
+<img src="figures/cumulative_ic.png" width="80%">
+</p>
 
 *Cumulative weekly IC across the 15-year test period. All three variants drift downward overall, with cumulative endpoints between -3 and -5, indicating that mean IC is statistically zero. The slope at any local segment is the mean IC for that subperiod.*
-
 
 
 **3. The signal is regime-dependent.** Subperiod analysis reveals significant IC in 2010–2013 ($t = -2.00$ for MP) and 2014–2017 ($t = +1.31$ for MP), near-zero IC in 2021–2024, with opposite signs cancelling over the full sample. The full-sample null is a regime-averaging artifact, not absence of signal.
@@ -146,14 +152,17 @@ We present the empirical results alongside a qualitative interpretation, explain
    - Hurst exponent
 
 
-3. **GLS-Ridge regression** (`src/model.py`): at each date $t$ in the training window $\mathcal{T}_{\text{train}}$, we stack the $p=5$ features for the $N$ assets into the design matrix $F_t\in \mathbb{R}^{N\times p}$ and denote the next-week returns by $r_{t+1}\in\mathbb{R}^N$. Pooling across all dates in the training window with the weighting matrix $W\in\mathbb{R}^{N\times N}$ assumed to be constant, the GLS-Ridge estimator solves in the closed form:
-   
-   $$\hat\beta = \Big(\sum_{t\in \mathcal{T}_{\text{train}}} F_t^T W F_t + \alpha I\Big)^{-1} \sum_{t\in\mathcal{T}_{\text{train}}} F_t^T W r_{t+1}$$
-   
-   where $\alpha>0$ is the Ridge penalty. Predictions on out-of-sample dates $t\in\mathcal{T}_{\text{test}}$ are $\hat{r}_{t+1}=F_t\hat\beta$.  Three variants of the weighting matrix $W$ are compared:
-   - **Identity:** $W = I$ (reduces to OLS-Ridge)
-   - **Sample GLS:** $W = \hat\Sigma^{+}$ using the raw sample covariance (via pseudoinverse, due to rank deficiency)
-   - **MP-cleaned GLS:** $W = \tilde\Sigma^{-1}$ using the MP-cleaned covariance
+3. **GLS-Ridge regression** (`src/model.py`): at each date $t$ in the training window $\mathcal{T}_{\text{train}}$, we stack the $p=5$ features for the $N$ assets into the design matrix $F_t\in \mathbb{R}^{N\times p}$ and denote the next-week returns by $r_{t+1}\in\mathbb{R}^N$. Pooling across all dates in the training window with the weighting matrix $W\in\mathbb{R}^{N\times N}$ assumed to be constant, the GLS-Ridge estimator solves in closed form the normal equation
+
+$$
+\hat\beta = \Big(\sum_{t\in \mathcal{T}_{\text{train}}} F_t^T W F_t + \alpha I\Big)^{-1} \sum_{t\in\mathcal{T}_{\text{train}}} F_t^T W r_{t+1}
+$$
+
+where $\alpha>0$ is the Ridge penalty. Predictions on out-of-sample dates $t\in\mathcal{T}_{\text{test}}$ are $\hat{r}_{t+1}=F_t\hat\beta$. Three variants of the weighting matrix $W$ are compared:
+
+- **Identity:** $W = I$ (reduces to OLS-Ridge)
+- **Sample GLS:** $W = \hat\Sigma^{+}$ using the raw sample covariance (via pseudoinverse, due to rank deficiency)
+- **MP-cleaned GLS:** $W = \tilde\Sigma^{-1}$ using the MP-cleaned covariance
 
 4. **Marchenko-Pastur filter** (`src/rmt.py`): For each training window, the MP cleaned covariance matrix is obtained using the following algorithm  
    - Compute $q=N/T$ from the current window's shape $(T=\text{dim}(\mathcal{T}_\text{train}))$
@@ -161,13 +170,13 @@ We present the empirical results alongside a qualitative interpretation, explain
    - Build and diagonalise the returns Pearson sample correlation matrix $\hat{C}= V \Lambda V^T$, where $\Lambda=\text{diag}(\lambda_1,\dots,\lambda_N)$ 
    - Signal/noise partition and MP filter: $\mathcal{S}:=\{k:\lambda_k>\lambda_+\}$, $\mathcal{N}:=\{k:\lambda_k\le \lambda_+\}$. Apply the MP-filter by retaining $\tilde{\lambda}_k=\lambda_k$ $\forall k\in \mathcal{S}$, and substituting $\tilde\lambda_{k}=\mu:=\frac{1}{|\mathcal{N}|}\sum_k \lambda_k$ $\forall k\in \mathcal{N}$. Notice that this filter is trace-invariant $\text{tr}(\Lambda)=\text{tr}(\tilde\Lambda)$. 
    - Reconstructing the MP-cleaned correlation matrix: from $\hat{C}'=V\tilde{\Lambda}V^T$ and $D_{\hat{C}'}:=\text{diag}(\sqrt{\hat{C}'_{11}},\dots,\sqrt{\hat{C}'_{NN}})$,  we obtain the MP-cleaned correlation matrix $\tilde{C}=D_{\hat{C}'}^{-1}\hat{C}' D_{\hat{C}'}^{-1}$ with unit diagonal entries
-   - MP-cleaned covariance matrix: from the cleaned correlation matrix we go back to the cleaned covariance matrix by rescaling with the sample volatilities $D_{\sigma}:=\text{diag}(\sqrt{\hat{\Sigma}_{11}},\dots,\sqrt{\hat{\Sigma}_{NN}})$ applied as $\tilde{\Sigma}=D_{\sigma}\tilde{C}D_{\sigma}$. 
-   <p align="center">
-   <img src="figures/eigenvalue_spectrum.png" width="90%">
-   
+   - MP-cleaned covariance matrix: from the cleaned correlation matrix we go back to the cleaned covariance matrix by rescaling with the sample volatilities $D_{\sigma}:=\text{diag}(\sqrt{\hat{\Sigma}_{11}},\dots,\sqrt{\hat{\Sigma}_{NN}})$ applied as $\tilde{\Sigma}=D_{\sigma}\tilde{C}D_{\sigma}$.
 
-    *Raw and MP-cleaned eigenvalue spectrum from the first training window ($q=1.48$, $\lambda_+ = 4.91$). Left: sorted eigenvalues on log scale. Right: empirical density with theoretical MP bulk density $\rho_{\text{MP}}=\frac{1}{2\pi q\lambda}\sqrt{(\lambda_+-\lambda)(\lambda-\lambda_-)}$ overlaid. The raw spectrum has ~130 signal eigenvalues above $\lambda_+$, dominated by the market mode at $\lambda_1 \approx 100$, and ~255 noise eigenvalues below, with the smallest reaching $10^{-13}$ (the rank-deficiency tail at $q > 1$). MP cleaning leaves the signal eigenvalues untouched and collapses the entire noise bulk to their common mean $\mu\approx 0.3$*. The MP-cleaned histogram shows the eigenvalues once the cleaned correlation matrix has been correctly normalised to unity diagonal entries.
-    </p>
+<p align="center">
+<img src="figures/eigenvalue_spectrum.png" width="90%">
+</p>
+
+*Raw and MP-cleaned eigenvalue spectrum from the first training window ($q=1.48$, $\lambda_+ = 4.91$). Left: sorted eigenvalues on log scale. Right: empirical density with theoretical MP bulk density $\rho_{\text{MP}}=\frac{1}{2\pi q\lambda}\sqrt{(\lambda_+-\lambda)(\lambda-\lambda_-)}$ overlaid. The raw spectrum has ~130 signal eigenvalues above $\lambda_+$, dominated by the market mode at $\lambda_1 \approx 100$, and ~255 noise eigenvalues below, with the smallest reaching $10^{-13}$ (the rank-deficiency tail at $q \gt 1$). MP cleaning leaves the signal eigenvalues untouched and collapses the entire noise bulk to their common mean $\mu\approx 0.3$. The MP-cleaned histogram shows the eigenvalues once the cleaned correlation matrix has been correctly normalised to unity diagonal entries.*
 
   
    
@@ -204,20 +213,20 @@ The plot of the Ridge $\alpha$ selected by CV at each refit per variant is an ou
  
 <p align="center">
   <img src="figures/alpha_over_time.png" width="60%">
-    <br>
-  <em>The outcome of the 5-fold time-series CV across refits, for identity (top), sample (middle) and MP-cleaned (bottom) variants.</b></em>
-
-  From the plot above we see that the Identity variant (top) yields the most stable CV trajectory, with the maximum $\alpha=1000$ selected at most refits. Conversely the sample variant (middle) is the most erratic, jumping between $\alpha = 0.01$ and $\alpha = 1000$ at consecutive refits because the noise-eigenvalue structure of $\hat\Sigma^+$ changes unpredictably. MP (bottom) mirrors identity — mostly $\alpha = 1000$ with occasional drops — because its normal matrix is stable across refits and CV can therefore find a consistent regularisation level.   
 </p>
+
+*The outcome of the 5-fold time-series CV across refits, for identity (top), sample (middle) and MP-cleaned (bottom) variants.*
+
+From the plot above we see that the Identity variant (top) yields the most stable CV trajectory, with the maximum $\alpha=1000$ selected at most refits. Conversely the sample variant (middle) is the most erratic, jumping between $\alpha = 0.01$ and $\alpha = 1000$ at consecutive refits because the noise-eigenvalue structure of $\hat\Sigma^+$ changes unpredictably. MP (bottom) mirrors identity — mostly $\alpha = 1000$ with occasional drops — because its normal matrix is stable across refits and CV can therefore find a consistent regularisation level.
 
 
 To understand if the variance-reduction mechanism in Finding 1 is exclusively due to the MP-cleaning procedure or whether the Ridge shrinkage plays any active role in it, we run an independent bootstrap study in `experiments/alpha_variance_study_fixed.py`, using the Künsch moving-block bootstrap (4 seeds × 200 resamples, block size 12, subsample size 200), which preserves local temporal structure. In this way we hold  the training window as well as the weighting matrix $W$ fixed, and study how the sampling variance of $\hat{\beta}$ varies as a function of $\alpha$ on a log-spaced grid.  This amounts to measure the conditional variance $\text{Var}(\hat{\beta}|W)$ while, from the law of total variance, the walk-forward scheme producing the Finding 4 measures the total variance across refits $\text{Var}(\hat{\beta})=\mathbb{E}_{W}[\text{Var}(\hat{\beta}|W)]+\text{Var}_W[\mathbb{E}(\hat{\beta}|W)]$. 
  
 <p align="center">
   <img src="figures/coefficient_variance_vs_alpha_fixed.png" width="90%">
-
-  *Coefficient volatility across bootstrap resamples as a function of $\alpha$, one panel per feature, for Identity (grey), Sample (orange) and MP (blue) variants.*
 </p>
+
+*Coefficient volatility across bootstrap resamples as a function of $\alpha$, one panel per feature, for Identity (grey), Sample (orange) and MP (blue) variants.*
 
 The result, plotted above, shows two interesting features:
 - Within our range of Ridge penalty  $\alpha\in [10^{-1},3\times10^3]$, Ridge shrinkage is effective only for the Identity variant, with the most regularised features being the realised volatility and the (simplified) Amihud illiquidity, while the standard deviations curves are essentially flat for both sample and MP-cleaned variants.
@@ -266,7 +275,7 @@ $$
 
 on which we observe the Finding 1.
 
-To run our diagnostic about the time stability of $\sigma^2$ for the different regression variants, we shall first manipulate the expression of $\text{IC}_t$. We introduce the centered ranks vectors $\mathcal{R}, \hat{\mathcal{R}}\in \mathcal {\mathbb{R}}^{N_t}$ with components
+To run our diagnostic about the time stability of $\sigma^2$ for the different regression variants, we shall first manipulate the expression of $\text{IC}_t$. We introduce the centered ranks vectors $\mathcal{R}, \hat{\mathcal{R}}\in \mathbb{R}^{N_t}$ with components
 
 $$
 \hat{\mathcal{R}}_i(F_t\hat{\beta})=\text{rank}_i (F_t\hat{\beta})-\frac{N_t+1}{2}\,,\quad {\mathcal{R}}_i(r_{t+1})=\text{rank}_i (r_{t+1})-\frac{N_t+1}{2}\, ,
@@ -278,7 +287,7 @@ $$
 \text{IC}_t(\hat\beta)=\frac{\langle \hat{\mathcal{R}},\mathcal{R}\rangle}{||\hat{\mathcal{R}}||\cdot||\mathcal{R}||}\, ,
 $$
 
-with $\langle\hat{\mathcal{R}},\mathcal{R}\rangle:=\sum_{i=1}^{N_t}\hat{\mathcal{R}}_i\mathcal{R}_i$ and $||\mathcal{R}||:=\sqrt{\braket{\mathcal{R},\mathcal{R}}}$ denoting respectively the dot-product and the norm of vectors. Notice that, as we highlighted, the time series $\text{IC}_t$ depends on our predictions through the estimator $\hat{\beta}_{(k)}\in \mathbb{R}^p$ at  refit $k\in\{1,\dots,K_{\text{refit}}=194\}$ the week $t$ belongs to. Moreover, because the rank operation is invariant under a positive rescaling of its argument, $\mathcal{R}(c \cdot x)=\mathcal{R(x)},\,\,\forall c>0$, it follows that $\text{IC}_{t}(\hat{u})$ is really a function of the direction in which the $\hat{\beta}$ vector points at every refit, $\hat{u}_{(k)}:=\hat{\beta}_{(k)}/||\hat{\beta}_{(k)}||$.
+with $\langle\hat{\mathcal{R}},\mathcal{R}\rangle:=\sum_{i=1}^{N_t}\hat{\mathcal{R}}_i\mathcal{R}_i$ and $||\mathcal{R}||:=\sqrt{\langle\mathcal{R},\mathcal{R}\rangle}$ denoting respectively the dot-product and the norm of vectors. Notice that, as we highlighted, the time series $\text{IC}_t$ depends on our predictions through the estimator $\hat{\beta}_{(k)}\in \mathbb{R}^p$ at  refit $k\in\{1,\dots,K_{\text{refit}}=194\}$ the week $t$ belongs to. Moreover, because the rank operation is invariant under a positive rescaling of its argument, $\mathcal{R}(c \cdot x)=\mathcal{R(x)},\,\,\forall c>0$, it follows that $\text{IC}_{t}(\hat{u})$ is really a function of the direction in which the $\hat{\beta}$ vector points at every refit, $\hat{u}_{(k)}:=\hat{\beta}_{(k)}/||\hat{\beta}_{(k)}||$.
 
 
  We shall now introduce the unit vector $\bar{u}$ as the unit-norm across-refit sample mean vector of the per-refit directions $\hat{u}_{(k)}$
@@ -439,5 +448,3 @@ All output figures are saved to `figures/`. Backtest results are saved to `data/
 Marco Serra— theoretical physics PhD, applying quantitative methods from random matrix theory and statistical mechanics to cross-sectional equity research. [email](mailto:marcoserra9777@gmail.com)
 
 ---
-
-
