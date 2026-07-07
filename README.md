@@ -15,7 +15,7 @@ According to the Marchenko-Pastur (MP) theorem from Random Matrix Theory, in the
 and well-conditioned, and whose inverse $W=\tilde{\Sigma}^{-1}$ weights the signal directions with their correctly estimated eigenvalues while assigning to all the noise directions the same uniform weight. 
 
 
-This project implements the full walk-forward pipeline and tests three variants of the GLS-Ridge regression, $W= I$ (OLS-Ridge), $W=\hat{Σ}^+$ (sample GLS-Ridge), and $W=\tilde{Σ}^{-1}$ (MP-cleaned GLS-Ridge), on the S&P 500 across a 15-year out-of-sample window, using the weekly Spearman Information Coefficient (IC) as the primary metric. 
+This project implements the full walk-forward pipeline and tests three variants of the GLS-Ridge regression, $W= I$ (OLS-Ridge), $W=\hat{\Sigma}^+$ (sample GLS-Ridge), and $W=\tilde{\Sigma}^{-1}$ (MP-cleaned GLS-Ridge), on the S&P 500 across a 15-year out-of-sample window, using the weekly Spearman Information Coefficient (IC) as the primary metric. 
 We present the empirical results alongside a qualitative interpretation, explaining how each variant's treatment of the noise eigenvalues of the sample correlation matrix propagates through the estimator to determine its empirical behavior.
 
 ---
@@ -29,7 +29,7 @@ We present the empirical results alongside a qualitative interpretation, explain
 
 <table>
 <tr>
-<td width="55%">
+<td width="48%">
 
 
 | Variant | N weeks | Mean IC | IC std | t-stat | ICIR (ann.) | Hit rate |
@@ -227,12 +227,16 @@ To find an explanation of this result, the first step is to  realise that the bo
 $\text{Cov}(\hat\beta)=(F_t^T W F_t+\alpha I)^{-1} \mathcal{F} (F_t^T W F_t+\alpha I)$, where $\mathcal{F}:= F_t^T W\hat{\Sigma} W F_t$. It is now useful to rotate into the eigenbasis 
  of the weighted feature covariance matrix $F_t^T W F_t= V \Lambda V^T$, where the covariance matrix of the rotated estimator   $\hat{\beta'}:= V^T\hat{\beta}$ becomes $\text{Cov}(\hat{\beta}'_i,\hat{\beta}'_j)=(V^T\mathcal{F} V)_{ij}/(\lambda_i+\alpha)(\lambda_j+\alpha)$, such that we recover the known result that Ridge shrinkage becomes sizable once $\alpha\sim\lambda_k$, producing a factor four reduction with respect to the $\alpha\rightarrow 0$ value. Rotating back to the feature-space directions we obtain the formulae for the variances we observe in the plot above
 
-$$\text{Var}(\hat{\beta}_i)=\sum_{jk}V_{ij}V_{ik}\text{Cov}(\hat{\beta}'_j,\hat{\beta}'_k)=\sum_{jk}\frac{V_{ij}V_{ik}(V^T\mathcal{F} V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,$$
+$$
+\text{Var}(\hat{\beta}_i)=\sum_{jk}V_{ij}V_{ik}\text{Cov}(\hat{\beta}'_j,\hat{\beta}'_k)=\sum_{jk}\frac{V_{ij}V_{ik}(V^T\mathcal{F} V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,
+$$
 
 which, besides the eigenvalues $\lambda_i$, depend also on the projection-components $V_{ij}$.
- In particular, for the sample variant $W=\hat{\Sigma}^{-1}$ (through its pseudoinverse) we have the biggest simplification since for this choice $(V^T \mathcal{F} V)_{\text{sample}}= \Lambda $, while $\mathcal{F}_{\text{identity}}=F_t^T\hat{\Sigma} F_t$ and   $\mathcal{F}_{\text{MP}}=F_t^T\tilde{\Sigma}^{-1}\hat{\Sigma}\tilde{\Sigma}^{-1} F_t$. All in all,  the variance of the coefficient of each feature and for each variant as function of Ridge $\alpha$ observed in the plot is given more explicitely by
+In particular, for the sample variant $W=\hat{\Sigma}^{-1}$ (through its pseudoinverse) we have the biggest simplification since for this choice $(V^T \mathcal{F} V)_{\text{sample}}= \Lambda $, while $\mathcal{F}_{\text{identity}}=F_t^T\hat{\Sigma} F_t$ and   $\mathcal{F}_{\text{MP}}=F_t^T\tilde{\Sigma}^{-1}\hat{\Sigma}\tilde{\Sigma}^{-1} F_t$. All in all,  the variance of the coefficient of each feature and for each variant as function of Ridge $\alpha$ observed in the plot is given more explicitely by
 
- $$\text{Var}(\hat{\beta}_i)_{\text{sample}}=\sum_{j} V_{ij}^2\frac{\lambda_{j}}{(\lambda_j+\alpha)^2}\,,\quad \text{Var}(\hat{\beta}_i)_{\text{identity}}=\sum_{jk}\frac{ V_{ij}V_{ik}(V^T F_t^T\hat{\Sigma}F_t V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,\quad \text{Var}(\hat{\beta}_i)_{\text{MP}}=\sum_{jk}\frac{ V_{ij}V_{ik}(V^T F_t^T\tilde{\Sigma}^{-1}\hat{\Sigma}\tilde{\Sigma}^{-1}F_t V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,$$
+$$
+\text{Var}(\hat{\beta}_i)_{\text{sample}}=\sum_{j} V_{ij}^2\frac{\lambda_{j}}{(\lambda_j+\alpha)^2}\,,\quad \text{Var}(\hat{\beta}_i)_{\text{identity}}=\sum_{jk}\frac{ V_{ij}V_{ik}(V^T F_t^T\hat{\Sigma}F_t V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,\quad \text{Var}(\hat{\beta}_i)_{\text{MP}}=\sum_{jk}\frac{ V_{ij}V_{ik}(V^T F_t^T\tilde{\Sigma}^{-1}\hat{\Sigma}\tilde{\Sigma}^{-1}F_t V)_{jk}}{(\lambda_j+\alpha)(\lambda_k+\alpha)}\,,
+$$
 
 and from the plot we learn the hierarchy $\text{Var}(\hat{\beta}_i)_{\text{identity}}>\text{Var}(\hat{\beta}_i)_{\text{MP}}>\text{Var}(\hat{\beta}_i)_{\text{sample}}$ that we remark to hold locally, i.e within-refit and not across-refit. Moreover, we understand that the $\text{Var}(\hat{\beta}_i)$ curve starts to bend at early or late $\alpha$ depending whether the $i$-th feature projects mainly onto small $\lambda_k$ or on the top eigenvalues, for the variant at hand. On a representative bootstrap window, the 5 eigenvalues of the matrix $F_t^T W F_t$, for all the three choices of $W$, are reported in the table below, ranked from the largest $(\lambda_1)$ to the smallest $(\lambda_5)$.
   
@@ -243,7 +247,6 @@ and from the plot we learn the hierarchy $\text{Var}(\hat{\beta}_i)_{\text{ident
 | $\lambda_3$ | $5.03\times 10^{3}$ | $4.73\times 10^{6}$ | $3.90\times 10^{6}$ |
 | $\lambda_4$ | $4.84\times 10^{3}$ | $4.47\times 10^{6}$ | $3.54\times 10^{6}$ |
 | $\lambda_5$ | $\mathbf{1.77\times 10^{2}}$ | $\mathbf{3.63\times 10^{5}}$ | $\mathbf{1.77\times 10^{5}}$ |
-|
 
 We therefore conclude that, for the identity variant, realised volatility and Amihud are the features with most substantial projection $V_{j5}$ onto the eigenvector associated to $\lambda_5=177$, and therefore their variance starts to bend early, around $\alpha\in[30,100]$. The remaining features are more orthogonal to direction five, hence their variances start bending later, around $\alpha\in[5\times 10^{2},10^{3}]$; For both sample and MP variant, the eigenvalues are not smaller that $10^{5}$ and  all the curves remain flat at least up to the endpoint of our interval $\alpha\sim 3\times 10^3$, where we observe the beginning of a slight bend for realised volatility and Amihud features. 
 
@@ -251,28 +254,58 @@ This analysis shows that Ridge shrinkage in the MP variant does not play any rol
 
 ### Why the MP-cleaned variant yields the lowest Spearman IC volatility
 To find a qualitative explanation of why the MP-cleaned variant yields the lowest Spearman IC standard deviation, we start by recalling that `src/backtest.py` produces a time series $\{\text{IC}_{t}\}_{t=1}^{T_{\text{test}}}$, for  $T_{\text{test}}\sim 776$ out-of-sample weeks in the window 2010-2024, where the Spearman IC at week t $\text{IC}_t$ is defined as the Pearson correlation coefficient between the rank of predicted returns $\hat{r}_{t+1}=F_t\hat{\beta}$ and the rank of realised returns $r_{t+1}$, i.e
+
 $$ \text{IC}_t:=\frac{\text{Cov}_{N_t}(\text{rank}(F_t\hat{\beta}),\text{rank}(r_{t+1}))}{\sigma_{N_t}(\text{rank}(F_t\hat{\beta}))\sigma_{N_t}(\text{rank}(r_{t+1}))}\, ,  
 $$
+
 with $\text{Cov}_{N_t}[\cdot]$ and $\sigma_{N_t}[\cdot]$  respectively the sample covariance and standard deviations taken cross-sectionally, i.e across the $N_t$ assets for a fixed week $t$. Then `src/evaluation.py` computes the sample standard deviation of the IC time series from the mean $\overline{\text{IC}}=1/T_{\text{test}}\sum_{t\in T_{\text{test}}}\text{IC}_t$
-$$ \sigma^2=\frac{1}{T_{\text{test}}-1}\sum_{t\in T_{\text{test}}}(\text{IC}_t-\overline{\text{IC}})^2\, ,
+
 $$ 
+\sigma^2=\frac{1}{T_{\text{test}}-1}\sum_{t\in T_{\text{test}}}(\text{IC}_t-\overline{\text{IC}})^2\, ,
+$$
+
 on which we observe the Finding 1.
 
 To run our diagnostic about the time stability of $\sigma^2$ for the different regression variants, we shall first manipulate the expression of $\text{IC}_t$. We introduce the centered ranks vectors $\mathcal{R}, \hat{\mathcal{R}}\in \mathcal {\mathbb{R}}^{N_t}$ with components
-$$\hat{\mathcal{R}}_i(F_t\hat{\beta})=\text{rank}_i (F_t\hat{\beta})-\frac{N_t+1}{2}\,,\quad {\mathcal{R}}_i(r_{t+1})=\text{rank}_i (r_{t+1})-\frac{N_t+1}{2}\, ,$$
+
+$$
+\hat{\mathcal{R}}_i(F_t\hat{\beta})=\text{rank}_i (F_t\hat{\beta})-\frac{N_t+1}{2}\,,\quad {\mathcal{R}}_i(r_{t+1})=\text{rank}_i (r_{t+1})-\frac{N_t+1}{2}\, ,
+$$
+
 $i=1,\dots,N_t$ and accordingly rewrite $\text{IC}_t$ as
-$$\text{IC}_t(\hat\beta)=\frac{\langle \hat{\mathcal{R}},\mathcal{R}\rangle}{||\hat{\mathcal{R}}||\cdot||\mathcal{R}||}\, ,$$
+
+$$
+\text{IC}_t(\hat\beta)=\frac{\langle \hat{\mathcal{R}},\mathcal{R}\rangle}{||\hat{\mathcal{R}}||\cdot||\mathcal{R}||}\, ,
+$$
+
 with $\langle\hat{\mathcal{R}},\mathcal{R}\rangle:=\sum_{i=1}^{N_t}\hat{\mathcal{R}}_i\mathcal{R}_i$ and $||\mathcal{R}||:=\sqrt{\braket{\mathcal{R},\mathcal{R}}}$ denoting respectively the dot-product and the norm of vectors. Notice that, as we highlighted, the time series $\text{IC}_t$ depends on our predictions through the estimator $\hat{\beta}_{(k)}\in \mathbb{R}^p$ at  refit $k\in\{1,\dots,K_{\text{refit}}=194\}$ the week $t$ belongs to. Moreover, because the rank operation is invariant under a positive rescaling of its argument, $\mathcal{R}(c \cdot x)=\mathcal{R(x)},\,\,\forall c>0$, it follows that $\text{IC}_{t}(\hat{u})$ is really a function of the direction in which the $\hat{\beta}$ vector points at every refit, $\hat{u}_{(k)}:=\hat{\beta}_{(k)}/||\hat{\beta}_{(k)}||$.
 
 
  We shall now introduce the unit vector $\bar{u}$ as the unit-norm across-refit sample mean vector of the per-refit directions $\hat{u}_{(k)}$
-$$\bar{u}=\frac{\hat{u}_{\text{sample}}}{||\hat{u}_\text{sample}||}\,,\quad\hat{u}_{\text{sample}}=\frac{1}{K_{\text{refit}}}\sum_{k=1}^{K_{\text{refit}}}\hat{u}_k\, .$$
+
+$$
+\bar{u}=\frac{\hat{u}_{\text{sample}}}{||\hat{u}_\text{sample}||}\,,\quad\hat{u}_{\text{sample}}=\frac{1}{K_{\text{refit}}}\sum_{k=1}^{K_{\text{refit}}}\hat{u}_k\, .
+$$
 
 We therefore think of the actual time series $\text{IC}_t(\hat{u})$ as stemming from the sum of two pieces
-$$\text{IC}_t(\hat{u})=\text{IC}_t(\bar{u})+\Delta_t\, ,$$
+
+$$
+\text{IC}_t(\hat{u})=\text{IC}_t(\bar{u})+\Delta_t\, ,
+$$
+
 where the first one is a "frozen contribution" obtained from using the across-refit mean direction $\bar{u}$ as prediction for all refits and the second one is the "deviation contribution" $\Delta_t:= \text{IC}_t(\hat{u})-\text{IC}_t(\bar{u})$ from the actual time series. Thus, taking the variance to both members  we obtain the algebraically exact variance decomposition
-$$\sigma^2= F+ D+2C\, ,$$
-where $$F:=\text{Var}_t(\text{IC}_t(\bar{u}))\,,\quad D:=\text{Var}_t(\Delta_t)\,,\quad C:=\text{Cov}_t(\text{IC}_t(\bar{u}),\Delta_t)$$ have the following meaning:
+
+$$
+\sigma^2= F+ D+2C\, ,
+$$
+
+where 
+
+$$
+F:=\text{Var}_t(\text{IC}_t(\bar{u}))\,,\quad D:=\text{Var}_t(\Delta_t)\,,\quad C:=\text{Cov}_t(\text{IC}_t(\bar{u}),\Delta_t)
+$$
+
+have the following meaning:
 - $F$ is the sample variance, across the
 $T_{\text{test}}$ weeks, of what the IC would have been if the estimator produced $\bar{u}$ at every single week. The only sources of week-to-week variation in $\text{IC}_t({\bar{u}})$​ are the features $F_t$
 and returns $r_{t+1}$, as the $\bar{u}$ is fixed,
